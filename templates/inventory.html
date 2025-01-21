@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Inventory Management</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-list">
+                {% for product in products %}
+                    <tr>
+                        <td>{{ product[0] }}</td>
+                        <td>{{ product[1] }}</td>
+                        <td>{{ product[2] }}</td>
+                        <td>
+                            <input type="number" id="price-{{ product[0] }}" value="{{ product[3] }}" class="form-control" />
+                        </td>
+                        <td>
+                            <input type="number" id="stock-{{ product[0] }}" value="{{ product[4] }}" class="form-control" />
+                        </td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editItem('{{ product[0] }}')">Update</button>
+                            <button class="btn btn-danger" onclick="deleteItem('{{ product[0] }}')">Delete</button>
+
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Add New Item</h3>
+        <form id="add-item-form">
+            <div class="form-group">
+                <label for="new-name">Name</label>
+                <input type="text" id="new-name" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label for="new-category">Category</label>
+                <input type="text" id="new-category" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label for="new-price">Price</label>
+                <input type="number" id="new-price" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label for="new-stock">Stock</label>
+                <input type="number" id="new-stock" class="form-control" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Add Item</button>
+        </form>
+    </div>
+
+    <script>
+        // Edit item function
+        function editItem(productId) {
+            const price = document.getElementById(`price-${productId}`).value;
+            const stock = document.getElementById(`stock-${productId}`).value;
+
+            $.ajax({
+                url: '/update_item',
+                type: 'POST',
+                data: JSON.stringify({ id: productId, price: price, stock: stock }),
+                contentType: 'application/json',
+                success: function(response) {
+                    alert('Item updated successfully');
+                },
+                error: function(error) {
+                    alert('Error updating item');
+                }
+            });
+        }
+
+        // Delete item function
+        function deleteItem(productId) {
+            if (confirm("Are you sure you want to delete this item?")) {
+                $.ajax({
+                    url: '/delete_item',
+                    type: 'POST',
+                    data: JSON.stringify({ id: productId }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        alert('Item deleted successfully');
+                        location.reload(); // Reload the page to show the updated inventory
+                    },
+                    error: function(error) {
+                        alert('Error deleting item');
+                    }
+                });
+            }
+        }
+
+        // Add new item function
+        $('#add-item-form').submit(function(e) {
+            e.preventDefault();
+
+            const name = $('#new-name').val();
+            const category = $('#new-category').val();
+            const price = $('#new-price').val();
+            const stock = $('#new-stock').val();
+
+            $.ajax({
+                url: '/add_item',
+                type: 'POST',
+                data: JSON.stringify({
+                    name: name,
+                    category: category,
+                    price: price,
+                    stock: stock
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    alert('Item added successfully');
+                    location.reload();  // Reload the page to show the updated inventory
+                },
+                error: function(error) {
+                    alert('Error adding item');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

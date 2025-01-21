@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickMart</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #4CAF50;
+      color: white;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .inventory-list,
+    .recommendation-list {
+      margin-bottom: 30px;
+    }
+
+    .inventory-item,
+    .recommendation-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .inventory-item:last-child,
+    .recommendation-item:last-child {
+      border-bottom: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .order-section {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .order-status {
+      font-size: 18px;
+      color: #333;
+      margin-top: 20px;
+    }
+
+    .order-status p {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    .submit-btn-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .submit-btn-container button:disabled {
+      background-color: #ccc;
+    }
+
+    .error-message {
+      color: red;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .recommendation-section {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #e8f5e9;
+      border-radius: 8px;
+    }
+
+    .recommendation-title {
+      font-size: 18px;
+      color: #2e7d32;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>QuickMart</h1>
+  </header>
+
+  <div class="container">
+    <p>Press the button and speak your order. You can also browse the available products below:</p>
+
+    <div class="inventory-list" id="inventoryList">
+    </div>
+
+    <div class="order-section">
+      <button id="voiceButton">🎤 Speak Your Order</button>
+      <div class="order-status">
+        <p id="orderText">Your order will appear here...</p>
+      </div>
+    </div>
+
+    <div class="submit-btn-container">
+      <button id="submitOrder" disabled>Submit Order</button>
+    </div>
+    
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="recommendation-section" id="recommendationSection" style="display: none;">
+      <div class="recommendation-title">Recommended Products for You:</div>
+      <div class="recommendation-list" id="recommendationList">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const voiceButton = document.getElementById('voiceButton');
+    const orderText = document.getElementById('orderText');
+    const submitOrder = document.getElementById('submitOrder');
+    const errorMessage = document.getElementById('errorMessage');
+    const inventoryList = document.getElementById('inventoryList');
+    const recommendationSection = document.getElementById('recommendationSection');
+    const recommendationList = document.getElementById('recommendationList');
+    let recognizedText = "";
+
+    async function fetchProducts() {
+      try {
+        const response = await fetch('http://127.0.0.1:5000/get_products');
+        const products = await response.json();
+
+        if (response.ok) {
+          // Populate the inventory list with the product details
+          inventoryList.innerHTML = products.map(product => `
+            <div class="inventory-item">
+              <span>${product.name}</span>
+              <span>${product.stock} available</span>
+              <span>₹${product.price}</span>
+            </div>
+          `).join('');
+        } else {
+          errorMessage.textContent = 'Error fetching products. Please try again later.';
+        }
+      } catch (error) {
+        errorMessage.textContent = 'Network error. Please try again later.';
+      }
+    }
+
+    // Initialize the product list on page load
+    fetchProducts();
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Your browser does not support speech recognition. Try using Google Chrome.');
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+
+      // Start recognition on button click
+      voiceButton.addEventListener('click', () => {
+        orderText.textContent = "Listening...";
+        recognition.start();
+      });
+
+      // Handle recognition results
+      recognition.onresult = (event) => {
+        recognizedText = event.results[0][0].transcript;
+        orderText.textContent = `${recognizedText}`;
+        submitOrder.disabled = false;
+        errorMessage.textContent = ''; 
+      };
+
+      recognition.onerror = (event) => {
+        orderText.textContent = `Error: ${event.error}`;
+      };
+    }
+
+    // Submit the recognized order to the backend
+    submitOrder.addEventListener('click', async () => {
+      const customerName = prompt("Please enter your name:");
+      if (!customerName) {
+        alert("Name is required!");
+        return;
+      }
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/place_order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            customer_name: customerName,
+            voice_command: recognizedText
+          })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert(`Order placed successfully! Estimated Delivery Time: ${result.estimated_delivery_time}`);
+            
+            // Display recommendations
+            if (result.recommended_products && result.recommended_products.length > 0) {
+              recommendationSection.style.display = 'block';
+
+              // Extract product names from recommendations and display them
+              recommendationList.innerHTML = result.recommended_products
+                .filter(item => item.trim() !== '') // Remove empty recommendations
+                .map(item => {
+                  const productName = item;
+                  return `
+                    <div class="recommendation-item">
+                      <span>${productName}</span>
+                    </div>
+                  `;
+                })
+                .join('');
+            }
+          } else {
+            errorMessage.textContent = result.error || "An error occurred while placing your order.";
+          }
+
+
+      } catch (error) {
+        errorMessage.textContent = "Network error. Please try again later.";
+      }
+    });
+  </script>
+
+</body>
+</html>
