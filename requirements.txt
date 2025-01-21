@@ -1,0 +1,4 @@
+speechrecognition
+flask
+puaudio
+word2number
