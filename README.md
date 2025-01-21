@@ -45,13 +45,13 @@ Make sure you have Python 3.x installed on your system.
 ### Installation Steps
 
 1. Clone this repository:
-   using git clone command 
-   cd QuickMart
+- using git clone command 
+- cd QuickMart
 
 2. Create a virtual environment:
-    python3 -m venv venv
-    source venv/bin/activate  # For Linux/Mac
-    venv\Scripts\activate     # For Windows
+- python3 -m venv venv
+- source venv/bin/activate  # For Linux/Mac
+- venv\Scripts\activate     # For Windows
 
 3. Install the required dependencies:
     pip install -r requirements.txt
