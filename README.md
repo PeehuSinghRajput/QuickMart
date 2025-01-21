@@ -45,8 +45,8 @@ Make sure you have Python 3.x installed on your system.
 ### Installation Steps
 
 1. Clone this repository:
-   git clone https://github.com/your-username/inventory-order-management.git
-   cd inventory-order-management
+   using git clone command 
+   cd QuickMart
 
 2. Create a virtual environment:
     python3 -m venv venv
