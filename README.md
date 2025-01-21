@@ -59,7 +59,7 @@ Make sure you have Python 3.x installed on your system.
 4. Run the Flask application:
     python index.py
 
-5. Open your browser and visit http://localhost:5000 to access the application.
+5. Open your browser and visit http://127.0.0.1:5000/ to access the application.
 
 ## Endpoints
 1. / : Displays the main Dashboard for QuickMart where user can give order using voice command and get product recommendation on category basis and estimation of delivery time for their ordered product
